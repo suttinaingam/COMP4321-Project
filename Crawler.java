@@ -1,3 +1,5 @@
+import IRUtilities.*;
+import StopStem.*;
 import jdbm.RecordManager;
 import jdbm.RecordManagerFactory;
 import jdbm.htree.HTree;
@@ -41,7 +43,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Comparator;
-
 /*
  * This class is used for crawling webpages.
  * 
@@ -68,13 +69,18 @@ public class Crawler
 		sb.setURL(url);
 		String allString = sb.getStrings();
 		String[] words = allString.split("[ \\n]");
+		StopStem stopStem = new StopStem("stopwords.txt");
+		Vector<String> wordVector = new Vector<String>();
 		for (int i = 0; i < words.length; i++){
 			words[i] = words[i].replace("\n", "").replace("\r", "");
 			words[i] = words[i].replaceAll("[())]", "");
 			words[i] = words[i].replaceAll("[^a-zA-Z]+", "");
 			words[i] = words[i].toLowerCase();
+			if (!stopStem.isStopWord(words[i])){
+				wordVector.add(words[i]);
+			}
 		}
-		Vector<String> wordVector = new Vector<String>(Arrays.asList(words));
+		// Vector<String> wordVector = new Vector<String>(Arrays.asList(words));
 		// HashMap<String, Integer> frequencyMap = countFrequency(wordVector);
 	
 		// List<Map.Entry<String, Integer>> list = new ArrayList<>(frequencyMap.entrySet());
@@ -102,6 +108,7 @@ public class Crawler
 	 */
 	public static HashMap<String, Integer> countFrequency(Vector<String> vector) {
 		HashMap<String, Integer> frequencyMap = new HashMap<String, Integer>();
+		System.out.println(vector.size());
 		for (int i = 0; i < vector.size(); i++) {
 			String element = vector.get(i);
 			if (frequencyMap.containsKey(element)) {
@@ -213,111 +220,8 @@ public class Crawler
 	 * @param number of pages to be fetched in int format
 	 * @return none
 	 */
-	public static void bfs(String startLink, int numPages) {
-		PrintStream originOutputStream = System.out;
-		File file = new File("spider_result.txt");
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream(file);
-		} catch (Exception e) {
-		}
-		// Create a new PrintStream that writes to the file output stream
-		PrintStream ps = new PrintStream(fos);
-		// Redirect System.out to the new PrintStream
-		System.setOut(ps);
 
-        Queue<String> queue = new LinkedList<>();
-        Set<String> visited = new HashSet<>();
-        queue.add(startLink);
-        visited.add(startLink);
-		int pageCount = 0;
-		Table pageTable = null;
-		Table wordTable = null;
-		Table pageProp = null;
-		Table forwardIndex = null;
-		Table childParent = null;
-		InvertedIndex invertedIndex = null;
-		try {
-			pageTable = new Table("phase1", "page");
-			wordTable = new Table("phase1", "word");
-			pageProp = new Table("phase1", "pageprop");
-			forwardIndex = new Table("phase1", "forwardindex");
-			childParent = new Table("phase1", "childparent");
-			invertedIndex = new InvertedIndex("phase1", "invertedindex");
-		} catch (Exception e) {}
-		int wordCount = 0;
-		int pCount = 0;
-		while (!queue.isEmpty() && pageCount < numPages) {
-			String currentLink = queue.poll();
-			try {
-				URL url = new URL(currentLink);
-				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				int responseCode = connection.getResponseCode();
-				if (responseCode == 200){
-					Crawler crawler = new Crawler(currentLink);
-					System.out.print(crawler.getTitle(currentLink));
-					System.out.println(currentLink);
-					System.out.println(crawler.getDate(currentLink) + ", " + crawler.getSize(currentLink));
-					if (pageTable.getValue(currentLink)==null){
-						pageTable.addEntry(currentLink, String.valueOf(pCount));
-						pCount++;
-					}
-					String value=crawler.getTitle(currentLink).trim()+" "+currentLink+" "+crawler.getDate(currentLink)+" "+crawler.getSize(currentLink);
-					pageProp.addEntry(String.valueOf(pageCount), value);
-					Vector<String> wordList = crawler.extractWords();
-					HashMap<String, Integer> frequencyMap = countFrequency(wordList);
-					List<Map.Entry<String, Integer>> list = new ArrayList<>(frequencyMap.entrySet());
-					list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-					ArrayList<String> wlist = new ArrayList<>();
-					for (Map.Entry<String, Integer> entry : list) {
-						if (entry.getKey()!=""){
-							wordTable.addEntry(String.valueOf(entry.getKey()), String.valueOf(wordCount));
-							invertedIndex.addEntry(String.valueOf(wordTable.getValue(entry.getKey())), pageTable.getValue(currentLink), String.valueOf(entry.getValue()));
-							wlist.add(String.valueOf(entry.getKey()));
-							wordCount++;
-						}
-					}
-					String wl = wlist.toString();
-					forwardIndex.addEntry(pageTable.getValue(currentLink), wl);
-					Vector<String> links = crawler.extractLinks();
-					int maxLinks = (links.size()>10?10:links.size());
-					for (int i = 0; i < maxLinks; i++) {
-						if (pageTable.getValue(links.get(i))==null){
-							pageTable.addEntry(links.get(i), String.valueOf(pCount));
-							pCount++;
-						}
-						if (childParent.getValue(links.get(i))==null && !pageTable.getValue(links.get(i)).equals(String.valueOf(0))){
-							childParent.addEntry(pageTable.getValue(links.get(i)), pageTable.getValue(currentLink));
-						}
-						System.out.println(links.get(i));
-					}
-					for (String link : links) {
-						if (!visited.contains(link)) {
-							visited.add(link);
-							queue.add(link);
-						} 
-					}
-					// System.out.println("---------------------------------------------------");
-					pageCount++;
-			
-				}
-			} catch (Exception e) {
-			}
-		}
-		// Close the output stream
-		try {
-			fos.close();
-			System.setOut(originOutputStream);
-			pageTable.close();
-			wordTable.close();
-			pageProp.close();
-			forwardIndex.close();
-			invertedIndex.close();
-			childParent.close();
-		} catch (Exception e) {}
-    }
-
-	public static void testProgram(String startLink, int numPages) throws Exception {
+	public static void crawlIndex(String startLink, int numPages) throws Exception {
 		// Table t = new Table("phase1", "childparent");
 		// t.printAll();
 		RecordManager recman = null;
@@ -328,7 +232,7 @@ public class Crawler
 		HTree childParent = null;
 		HTree invertedIndex = null;
 		try {
-			recman = RecordManagerFactory.createRecordManager("phase1");
+			recman = RecordManagerFactory.createRecordManager("project");
 			pageTable = HTree.createInstance(recman);
 			recman.setNamedObject("page", pageTable.getRecid());
 			wordTable = HTree.createInstance(recman);
@@ -348,12 +252,11 @@ public class Crawler
 		FileOutputStream fos = null;
 		try {
 			fos = new FileOutputStream(file);
-		} catch (Exception e) {
-		}
+		} catch (Exception e) {}
 		// Create a new PrintStream that writes to the file output stream
 		PrintStream ps = new PrintStream(fos);
 		// Redirect System.out to the new PrintStream
-		System.setOut(ps);
+		// System.setOut(ps);
 
         Queue<String> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
@@ -376,7 +279,11 @@ public class Crawler
 				URL url = new URL(currentLink);
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				int responseCode = connection.getResponseCode();
-				if (responseCode == 200){
+				System.out.println(responseCode);
+				System.out.println(pageCount);
+				System.out.println(numPages);
+				if (responseCode == 200 || responseCode == 301){
+					System.out.println("hello");
 					Crawler crawler = new Crawler(currentLink);
 					if (pageTable.get(currentLink)==null){
 						pageTable.put(currentLink, String.valueOf(pCount));
@@ -390,13 +297,17 @@ public class Crawler
 					if (pageProp.get(String.valueOf(pageCount))==null){
 						pageProp.put(String.valueOf(pageCount), value);
 					}
+					System.out.println("hel3");
 					Vector<String> wordList = crawler.extractWords();
+					System.out.println("hel2");
 					HashMap<String, Integer> frequencyMap = countFrequency(wordList);
+					System.out.println("hel4");
 					List<Map.Entry<String, Integer>> list = new ArrayList<>(frequencyMap.entrySet());
 					list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
 					ArrayList<String> wlist = new ArrayList<>();
 					for (Map.Entry<String, Integer> entry : list) {
 						if (entry.getKey()!=""){
+							System.out.println(entry.getKey());
 							if (wordTable.get(String.valueOf(entry.getKey()))==null){
 								wordTable.put(String.valueOf(entry.getKey()), String.valueOf(wordCount));
 							}
@@ -437,6 +348,7 @@ public class Crawler
 					}
 					// System.out.println("---------------------------------------------------");
 					pageCount++;
+					System.out.println("hello");
 			
 				}
 			} catch (Exception e) {
@@ -451,7 +363,7 @@ public class Crawler
 		} catch (Exception e) {}
 	}
 
-	public static void test(){
+	public static void retrieve(){
 		// PrintStream originOutputStream = System.out;
 		// File file = new File("spider_result.txt");
 		// FileOutputStream fos = null;
@@ -469,7 +381,7 @@ public class Crawler
 		HTree childParent = null;
 		HTree invertedIndex = null;
 		try {
-			recman = RecordManagerFactory.createRecordManager("phase1");
+			recman = RecordManagerFactory.createRecordManager("project");
 			pageTable = HTree.load(recman, recman.getNamedObject("page"));
 			wordTable = HTree.load(recman, recman.getNamedObject("word"));
 			pageProp = HTree.load(recman, recman.getNamedObject("pageprop"));
@@ -479,16 +391,43 @@ public class Crawler
 			FastIterator iter = pageProp.keys();
 			String key;
 			String key2;
-			FastIterator iter2 = invertedIndex.keys();	
-			FastIterator iter3 = childParent.keys();
-			while ((key2 = (String)iter.next())!=null){
-				String value2 = (String)invertedIndex.get(key2);
-				System.out.print(value2);
-				String[] array2 = value2.split(" ");
-				for (String a : array2){
-					System.out.println(a);
-				}
+			FastIterator invertedIter = invertedIndex.keys();	
+			FastIterator wordIter = wordTable.keys();
+			// FastIterator iter3 = childParent.keys();
+			int i = 0;
+			while(invertedIter.next()!=null) {
+				i++;
+				// invertedIter.next();
 			}
+			// System.out.println(i);
+			i = 0;
+			while(wordIter.next()!=null) {
+				i++;
+				// invertedIter.next();
+			}
+			// System.out.println(i);
+			invertedIter = invertedIndex.keys();
+			wordIter = wordTable.keys();
+			while ((key = (String)invertedIter.next())!=null){
+				// System.out.println(key);
+				while ((key2 = (String)wordIter.next())!=null){
+					// System.out.println("Inverted " + key);
+					// System.out.println("WordTable " + wordTable.get(key2));
+					// System.out.println(key.equals((String)wordTable.get(key2)));
+					if (key.equals((String)wordTable.get(key2))){
+						// System.out.print(key2 + ": ");
+					}
+				}
+				wordIter = wordTable.keys();
+				// System.out.println(invertedIndex.get(key));
+				// System.out.print(wordTable.get(key));
+				// System.out.println(invertedIndex.get(key));
+				// String[] array2 = value2.split(" ");
+				// for (String a : array2){
+				// 	// System.out.println(a);
+				// }
+			}
+			iter = pageProp.keys();
 			while( (key = (String)iter.next())!=null)
 			{
 				String[] in = (String[])pageProp.get(key);
@@ -502,6 +441,11 @@ public class Crawler
 				System.out.println("--------------------");
 				
 			}
+			wordIter = wordTable.keys();
+			while ((key = (String)wordIter.next())!=null){
+				// System.out.println(key);
+				// System.out.println(wordTable.get(key));
+			}
 			// fos.close();
 			// System.setOut(originOutputStream);
 		} catch (Exception e) {}
@@ -511,18 +455,18 @@ public class Crawler
 	{
 		try  
 		{         
-			File f= new File("phase1.db");             
+			File f= new File("project.db");             
 			f.delete(); 
-			f = new File("phase1.lg");
+			f = new File("project.lg");
 			f.delete();
-		}  
-		catch(Exception e)  {}  
-		String startLink = "https://www.cse.ust.hk/";
-		int numPages = 2;
+		}  catch(Exception e)  {}  
+		String startLink = "http://www.cse.ust.hk";
+		// String startLink = "https://www.cse.ust.hk/~kwtleung/COMP4321/testpage.htm";
+		int numPages = 5;
         // bfs(startLink, numPages);
 		try {
-			testProgram(startLink, numPages);
-			test();
+			crawlIndex(startLink, numPages);
+			retrieve();
 		} catch (Exception e) {}
 	}
 }
