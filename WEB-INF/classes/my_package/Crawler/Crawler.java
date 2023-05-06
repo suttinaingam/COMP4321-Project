@@ -267,10 +267,39 @@ public class Crawler
 						System.out.println(pCount);
 					}
 					String[] value = new String[4];
-					value[0] = crawler.getTitle(currentLink).trim();
+					PrintStream originalSystemOut = System.out;
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					System.setOut(new java.io.PrintStream(baos));
+					try{
+						Parser.main(new String[]  {currentLink, "TITLE"});
+					}catch(Exception e){}
+					System.setOut(originalSystemOut);
+					String output = baos.toString();
+					String title;
+					if (output.length()>7){
+						title = output.substring(7, output.length());
+					}
+					else{
+						title = " ";
+					}
+					long lastModified = connection.getLastModified();
+					if (lastModified == 0){
+						lastModified = connection.getDate();
+					}
+					Date lastModifiedDate = new Date(lastModified);
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					String lastModifiedDateString = sdf.format(lastModifiedDate);
+					Parser parser = new Parser(url.toString());
+					NodeList nodes = parser.parse(null);
+					String htmlCode = nodes.toHtml();
+					long pageSize = connection.getContentLength();
+					if (pageSize==-1){
+						pageSize = htmlCode.length();
+					}
+					value[0] = title;
 					value[1] = currentLink;
-					value[2] = crawler.getDate(currentLink);
-					value[3] = String.valueOf(crawler.getSize(currentLink));
+					value[2] = lastModifiedDateString;
+					value[3] = String.valueOf(pageSize);
 					if (pageProp.get(String.valueOf(pageCount))==null){
 						pageProp.put(String.valueOf(pageCount), value);
 					}
@@ -304,8 +333,8 @@ public class Crawler
 						if (pCount < numPages - 1){
 							if (pageTable.get(links.get(i))==null){
 								// if (pageTable.get(links.get(i))==null){
-								pageTable.put(links.get(i), String.valueOf(pCount));
-								pCount++;
+								pageTable.put(links.get(i), String.valueOf(pageCount));
+								// pCount++;
 							}
 								// }
 							System.out.println(pCount);
