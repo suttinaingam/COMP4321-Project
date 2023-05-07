@@ -1,9 +1,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.lang.*" %>
-<%@ page import="my_package.Test" %>
-<%@ page import="my_package.TestProgram" %>
-<%@ page import="my_package.Search" %>
-<%@ page import="my_package.Crawler.Crawler" %>
+<%@ page import="Search.Search" %>
+<%@ page import="Crawler.Crawler" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 
@@ -19,11 +17,9 @@ if(request.getParameter("query")!=null)
         out.println(tokens[i]);
         out.println("<br>");
     }
-    out.println(Test.test(tokens));
-    out.println(Test.hello_world());
-    out.println(Search.test());
-    out.println(TestProgram.getWord());
-    ArrayList<String> pages = Search.retrieval_fun("computer science");
+    String query = request.getParameter("query");
+    Search search = new Search();
+    ArrayList<String> pages = search.retrieval_fun(query);
     out.println(pages);
 }
 else
