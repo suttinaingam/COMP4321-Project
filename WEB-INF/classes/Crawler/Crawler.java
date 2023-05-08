@@ -82,7 +82,7 @@ public class Crawler
 			// if (!stopStem.isStopWord(words[i])){
 			// 	wordVector.add(stopStem.stem(words[i]));
 			// }
-			if (words[i]!=""){
+			if (words[i]!="" && !stopStem.isStopWord(words[i])){
 				wordVector.add(stopStem.stem(words[i]));
 			}
 		}
@@ -128,77 +128,6 @@ public class Crawler
 	    }
 	    return v_link;
 	}
-
-	/*
-	 * This method gets title of a webpage.
-	 * @param URL link of a wepage in String format
-	 * @return title of the webpage in String format
-	 */
-	public String getTitle(String link){
-		PrintStream originalSystemOut = System.out;
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		System.setOut(new java.io.PrintStream(baos));
-		try{
-			Parser.main(new String[]  {link, "TITLE"});
-		}catch(Exception e){
-		
-		}
-		System.setOut(originalSystemOut);
-		String output = baos.toString();
-		String title;
-		if (output.length()>7){
-			title = output.substring(7, output.length());
-		}
-		else{
-			title = " ";
-		}
-		return title;
-    }
-
-	/*
-	 * This method gets last modification date of a webpage.
-	 * @param URL link of a wepage in String format
-	 * @return last modification date of the webpage in String format
-	 * if last modification date is not available, return latest access date
-	 */
-	public String getDate(String link){
-		try {
-			URL url = new URL(link);
-			URLConnection connection = url.openConnection();
-			// Get the last modification date from the headers
-			long lastModified = connection.getLastModified();
-			if (lastModified == 0){
-				lastModified = connection.getDate();
-			}
-			Date lastModifiedDate = new Date(lastModified);
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			String lastModifiedDateString = sdf.format(lastModifiedDate);
-			return lastModifiedDateString;
-		} catch (Exception e) {}
-		return " ";
-	}
-
-	/*
-	 * This method gets size of a webpage.
-	 * @param URL link of a wepage in String format
-	 * @return size of the webpage in long format
-	 * if size is not available or 0, return number of HTML code in the webpage
-	 */
-	public long getSize(String link){
-		try {
-			URL url = new URL(link);
-			Parser parser = new Parser(url.toString());
-			NodeList nodes = parser.parse(null);
-			String htmlCode = nodes.toHtml();
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			long pageSize = connection.getContentLength();
-			if (pageSize==-1){
-				pageSize = htmlCode.length();
-			}
-			return pageSize;
-		} catch (Exception e) {}
-		return 0;
-	}
 	
 	/*
 	 * This method fetches webpages using breadth-first strategy.
@@ -209,8 +138,6 @@ public class Crawler
 	 */
 
 	public static void crawlIndex(String startLink, int numPages) throws Exception {
-		// Table t = new Table("phase1", "childparent");
-		// t.printAll();
 		RecordManager recman = null;
 		HTree pageTable = null;
 		HTree wordTable = null;
@@ -218,12 +145,15 @@ public class Crawler
 		HTree forwardIndex = null;
 		HTree childParent = null;
 		HTree invertedIndex = null;
+		HTree invPT = null;
+		HTree invWT = null;
+		HTree titleIndex = null;
 		try {
-			File f= new File("project.db");             
-			f.delete(); 
-			f = new File("project.lg");
-			f.delete();
 			String catalinaHome = System.getenv("CATALINA_HOME");
+			File f= new File(catalinaHome + "/bin/assets/project.db");             
+			f.delete(); 
+			f = new File(catalinaHome + "/bin/assets/project.lg");
+			f.delete();
 			recman = RecordManagerFactory.createRecordManager(catalinaHome + "/bin/assets/project");
 			pageTable = HTree.createInstance(recman);
 			recman.setNamedObject("page", pageTable.getRecid());
@@ -237,6 +167,12 @@ public class Crawler
 			recman.setNamedObject("childparent", childParent.getRecid());
 			invertedIndex = HTree.createInstance(recman);
 			recman.setNamedObject("invertedindex", invertedIndex.getRecid());
+			invPT = HTree.createInstance(recman);
+			recman.setNamedObject("invpage", invPT.getRecid());
+			invWT = HTree.createInstance(recman);
+			recman.setNamedObject("invword", invWT.getRecid());
+			titleIndex = HTree.createInstance(recman);
+			recman.setNamedObject("title", titleIndex.getRecid());
 		} catch (Exception e) {}
 
 		PrintStream originOutputStream = System.out;
@@ -269,6 +205,7 @@ public class Crawler
 				Crawler crawler = new Crawler(currentLink);
 				if (pageTable.get(currentLink)==null){
 					pageTable.put(currentLink, String.valueOf(pCount));
+					invPT.put(String.valueOf(pCount), currentLink);
 					pCount++;
 					System.out.println(pCount);
 				}
@@ -282,6 +219,7 @@ public class Crawler
 				System.setOut(originalSystemOut);
 				String output = baos.toString();
 				String title;
+				title = output;
 				if (output.length()>7){
 					title = output.substring(7, output.length());
 				}
@@ -302,6 +240,33 @@ public class Crawler
 				if (pageSize==-1){
 					pageSize = htmlCode.length();
 				}
+				String[] titleWords = title.split(" ");
+				StopStem stopStem = new StopStem("stopwords.txt");
+				Vector<String> titleVector = new Vector<String>();
+				for (int i = 0; i < titleWords.length; i++){
+					if (titleWords[i]!="" && !stopStem.isStopWord(titleWords[i])){
+						titleVector.add(stopStem.stem(titleWords[i]));
+					}
+				}
+				HashMap<String, Integer> titleFreqs = countFrequency(titleVector);
+				for (Map.Entry<String, Integer> entry : titleFreqs.entrySet()){
+					System.out.println(entry.getKey() + " " + entry.getValue());
+				}
+				// HashMap<String, Integer> titleFreqs = new HashMap<>();
+				// for (String word: titleWords){
+				// 	if (titleFreqs.get(word)==null){
+				// 		titleIndex.put(word, 1);
+				// 	}
+				// 	else{
+				// 		titleIndex.put(word, titleIndex.get(word)+1);
+				// 	}
+				// }
+				// for (String word: titleWords){
+				// 	if (titleIndex.get(word)==null){
+				// 		titleIndex.put(word, 1);
+				// 	}
+
+				// }
 				value[0] = title;
 				value[1] = currentLink;
 				value[2] = lastModifiedDateString;
@@ -318,6 +283,8 @@ public class Crawler
 					if (entry.getKey()!=""){
 						if (wordTable.get(String.valueOf(entry.getKey()))==null){
 							wordTable.put(String.valueOf(entry.getKey()), String.valueOf(wordCount));
+							invWT.put(String.valueOf(wordCount), String.valueOf(entry.getKey()));
+							wordCount++;
 						}
 						if (invertedIndex.get(String.valueOf(wordTable.get(entry.getKey())))!=null){
 							invertedIndex.put(String.valueOf(wordTable.get(entry.getKey())), invertedIndex.get(String.valueOf(wordTable.get(entry.getKey()))) + "p" + pageTable.get(currentLink) + " " + String.valueOf(entry.getValue()) + " ");
@@ -326,7 +293,7 @@ public class Crawler
 							invertedIndex.put(wordTable.get(entry.getKey()), "p" + pageTable.get(currentLink) + " " + String.valueOf(entry.getValue()) + " ");
 						}
 						wlist.add(String.valueOf(entry.getKey()));
-						wordCount++;
+						wlist.add(String.valueOf(entry.getValue()));
 					}
 				}
 				String wl = wlist.toString();
@@ -340,6 +307,7 @@ public class Crawler
 						if (pageTable.get(links.get(i))==null){
 							// if (pageTable.get(links.get(i))==null){
 							pageTable.put(links.get(i), String.valueOf(pCount));
+							invPT.put(String.valueOf(pCount), links.get(i));
 							pCount++;
 							System.out.println(pCount);
 						}
