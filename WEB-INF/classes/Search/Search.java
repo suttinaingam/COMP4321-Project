@@ -22,8 +22,10 @@ public class Search {
         ArrayList<String> result = new ArrayList<>();
         ArrayList<String> split = new ArrayList<String>(Arrays.asList(query.split(" ")));
         ArrayList<String> tokens = new ArrayList<String>();
-        StopStem stopStem = new StopStem("stopwords.txt");
+        String catalinaHome = System.getenv("CATALINA_HOME");
+        StopStem stopStem = new StopStem(catalinaHome + "/webapps/comp4321/WEB-INF/classes/stopwords.txt");
         for (String token: split){
+            System.out.println(token + !stopStem.isStopWord(token));
             if (!stopStem.isStopWord(token)){
                 tokens.add(stopStem.stem(token));
             }
@@ -56,7 +58,6 @@ public class Search {
         HTree invPT = null;
 		HTree invWT = null;
         HTree titleIndex = null;
-        String catalinaHome = System.getenv("CATALINA_HOME");
 		try {
 			recman = RecordManagerFactory.createRecordManager(catalinaHome + "/bin/assets/project");
 			pageTable = HTree.load(recman, recman.getNamedObject("page"));
@@ -202,14 +203,29 @@ public class Search {
                     innerProduct = innerProduct/(Math.sqrt(q)*Math.sqrt(doc));
                 }
                 if (i == 75){System.out.println(innerProduct);}
+                int count = 0;
                 for (String token: tokens){
                     String a = (String) invPT.get(Integer.toString(i));
                     // System.out.println(a);
                     String b = (String) titleIndex.get(a);
+                    String[] temp = b.split(" ");
+                    // if (i==70){
+                    //     for (String t: temp){
+                    //         System.out.print(t);
+                    //     }
+                    //     System.out.println("h" + temp.length/2);
+                    // }
+                    System.out.println("length = " + temp.length/2);
                     // System.out.println(b);
                     // String titleWords = titleIndex.get((String) invPT.get(Integer.toString(i)));
                     if (b.contains(token)){
-                        innerProduct += 0.1;
+                        innerProduct += 1/temp.length;
+                        count++;
+                    }
+                    if (i==70){System.out.println(tokens.size());System.out.println(count);}
+                    // System.out.println(temp.length/2);
+                    if (count == tokens.size()){
+                        innerProduct += 1;
                     }
                 }
                 if (innerProduct != 0.0){
@@ -260,6 +276,7 @@ public class Search {
         // put in web.jsp
         String pageID;
         String[] prop;
+        result.add("suttinai");
         // for (int i = 0; i < 10; i++){
         //     System.out.println("i = "+i);
         //     if (sortedResults.get(i).getKey()!= null){

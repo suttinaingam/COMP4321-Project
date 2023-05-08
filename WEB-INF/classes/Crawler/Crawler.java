@@ -244,6 +244,10 @@ public class Crawler
 				StopStem stopStem = new StopStem("stopwords.txt");
 				Vector<String> titleVector = new Vector<String>();
 				for (int i = 0; i < titleWords.length; i++){
+					titleWords[i] = titleWords[i].replace("\n", "").replace("\r", "");
+					titleWords[i] = titleWords[i].replaceAll("[())]", "");
+					titleWords[i] = titleWords[i].replaceAll("[^a-zA-Z]+", "");
+					titleWords[i] = titleWords[i].toLowerCase();
 					if (titleWords[i]!="" && !stopStem.isStopWord(titleWords[i])){
 						titleVector.add(stopStem.stem(titleWords[i]));
 					}

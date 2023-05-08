@@ -43,25 +43,25 @@ public class TestProgram {
 			invertedIndex = HTree.load(recman, recman.getNamedObject("invertedindex"));	
             invPT = HTree.load(recman, recman.getNamedObject("invpage"));
             invWT = HTree.load(recman, recman.getNamedObject("invword"));	
-			ArrayList<String> pages = search.retrieval_fun("Shamanic Princess");
-			System.out.println(pages);
+			ArrayList<String> pages = search.retrieval_fun("Sex and the Beauties");
+			// System.out.println(pages);
 			String index;
 			double score;
 			String[] info;
 			String[] prop;
-			// for (int i = 0; i < pages.size(); i++){
-			// 	info = pages.get(i).split(" ");
-			// 	index = info[0];
-			// 	score = Double.valueOf(info[1]);
-			// 	prop = (String[]) pageProp.get(index);
-			// 	System.out.println(score);
-			// 	System.out.println(prop[0]);
-			// 	System.out.println(invPT.get(index));
-			// 	System.out.println(prop[2]);
-			// 	System.out.println(prop[3]);
-			// 	System.out.println(forwardIndex.get(index));
-			// 	System.out.println(" ");
-			// }
+			for (int i = 0; i < 5; i++){
+				info = pages.get(i).split(" ");
+				index = info[0];
+				score = Double.valueOf(info[1]);
+				prop = (String[]) pageProp.get(index);
+				System.out.println(score);
+				System.out.println(prop[0]);
+				System.out.println(invPT.get(index));
+				System.out.println(prop[2]);
+				System.out.println(prop[3]);
+				System.out.println(forwardIndex.get(index));
+				System.out.println(" ");
+			}
 		} catch(Exception e){}	
             String key;
 	}
