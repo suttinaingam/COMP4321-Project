@@ -28,6 +28,9 @@ public class Search {
                 tokens.add(stopStem.stem(token));
             }
         }
+        for (String token: tokens){
+            System.out.println(token);
+        }
 
         // Create a HashMap to store the token frequencies
         HashMap<String, Integer> tokenFreqs = new HashMap<String, Integer>();
@@ -52,6 +55,7 @@ public class Search {
 		HTree invertedIndex = null;
         HTree invPT = null;
 		HTree invWT = null;
+        HTree titleIndex = null;
         String catalinaHome = System.getenv("CATALINA_HOME");
 		try {
 			recman = RecordManagerFactory.createRecordManager(catalinaHome + "/bin/assets/project");
@@ -62,7 +66,8 @@ public class Search {
 			childParent = HTree.load(recman, recman.getNamedObject("childparent"));
 			invertedIndex = HTree.load(recman, recman.getNamedObject("invertedindex"));	
             invPT = HTree.load(recman, recman.getNamedObject("invpage"));
-            invWT = HTree.load(recman, recman.getNamedObject("invword"));		
+            invWT = HTree.load(recman, recman.getNamedObject("invword"));	
+            titleIndex = HTree.load(recman, recman.getNamedObject("title"));	
             String key;
 			FastIterator wordIter = wordTable.keys();
             FastIterator invertedIter = invertedIndex.keys();
@@ -197,6 +202,16 @@ public class Search {
                     innerProduct = innerProduct/(Math.sqrt(q)*Math.sqrt(doc));
                 }
                 if (i == 75){System.out.println(innerProduct);}
+                for (String token: tokens){
+                    String a = (String) invPT.get(Integer.toString(i));
+                    // System.out.println(a);
+                    String b = (String) titleIndex.get(a);
+                    // System.out.println(b);
+                    // String titleWords = titleIndex.get((String) invPT.get(Integer.toString(i)));
+                    if (b.contains(token)){
+                        innerProduct += 0.1;
+                    }
+                }
                 if (innerProduct != 0.0){
                     results.put(Integer.valueOf(i), innerProduct);
                 }

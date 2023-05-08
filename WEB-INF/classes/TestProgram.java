@@ -16,7 +16,7 @@ public class TestProgram {
 		String startLink = "https://www.cse.ust.hk/~kwtleung/COMP4321/testpage.htm";
 		int numPages = 300;
 		try {
-			Crawler.crawlIndex(startLink, numPages);
+			// Crawler.crawlIndex(startLink, numPages);
 			// Crawler.retrieve();
 		} catch (Exception e) {}
 		Search search = new Search();
@@ -34,21 +34,21 @@ public class TestProgram {
 		HTree invWT = null;
         String catalinaHome = System.getenv("CATALINA_HOME");
 		try {
-			// recman = RecordManagerFactory.createRecordManager(catalinaHome + "/bin/assets/project");
-			// pageTable = HTree.load(recman, recman.getNamedObject("page"));
-			// wordTable = HTree.load(recman, recman.getNamedObject("word"));
-			// pageProp = HTree.load(recman, recman.getNamedObject("pageprop"));
-			// forwardIndex = HTree.load(recman, recman.getNamedObject("forwardindex"));
-			// childParent = HTree.load(recman, recman.getNamedObject("childparent"));
-			// invertedIndex = HTree.load(recman, recman.getNamedObject("invertedindex"));	
-            // invPT = HTree.load(recman, recman.getNamedObject("invpage"));
-            // invWT = HTree.load(recman, recman.getNamedObject("invword"));	
-			// ArrayList<String> pages = search.retrieval_fun("test page");
-			// System.out.println(pages);
-			// String index;
-			// double score;
-			// String[] info;
-			// String[] prop;
+			recman = RecordManagerFactory.createRecordManager(catalinaHome + "/bin/assets/project");
+			pageTable = HTree.load(recman, recman.getNamedObject("page"));
+			wordTable = HTree.load(recman, recman.getNamedObject("word"));
+			pageProp = HTree.load(recman, recman.getNamedObject("pageprop"));
+			forwardIndex = HTree.load(recman, recman.getNamedObject("forwardindex"));
+			childParent = HTree.load(recman, recman.getNamedObject("childparent"));
+			invertedIndex = HTree.load(recman, recman.getNamedObject("invertedindex"));	
+            invPT = HTree.load(recman, recman.getNamedObject("invpage"));
+            invWT = HTree.load(recman, recman.getNamedObject("invword"));	
+			ArrayList<String> pages = search.retrieval_fun("Shamanic Princess");
+			System.out.println(pages);
+			String index;
+			double score;
+			String[] info;
+			String[] prop;
 			// for (int i = 0; i < pages.size(); i++){
 			// 	info = pages.get(i).split(" ");
 			// 	index = info[0];

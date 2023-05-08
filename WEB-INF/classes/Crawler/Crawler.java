@@ -248,10 +248,13 @@ public class Crawler
 						titleVector.add(stopStem.stem(titleWords[i]));
 					}
 				}
+				String resultTitle = "";
 				HashMap<String, Integer> titleFreqs = countFrequency(titleVector);
 				for (Map.Entry<String, Integer> entry : titleFreqs.entrySet()){
 					System.out.println(entry.getKey() + " " + entry.getValue());
+					resultTitle += entry.getKey() + " " + entry.getValue() + " ";
 				}
+				titleIndex.put(currentLink, resultTitle);
 				// HashMap<String, Integer> titleFreqs = new HashMap<>();
 				// for (String word: titleWords){
 				// 	if (titleFreqs.get(word)==null){
