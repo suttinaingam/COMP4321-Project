@@ -79,14 +79,27 @@ public class Crawler
 			words[i] = words[i].replaceAll("[())]", "");
 			words[i] = words[i].replaceAll("[^a-zA-Z]+", "");
 			words[i] = words[i].toLowerCase();
-			// if (!stopStem.isStopWord(words[i])){
-			// 	wordVector.add(stopStem.stem(words[i]));
-			// }
 			if (words[i]!="" && !stopStem.isStopWord(words[i])){
 				wordVector.add(stopStem.stem(words[i]));
 			}
 		}
 		return wordVector;
+	}
+
+	public Vector<String> extract2Grams(Vector<String> wordVector) throws ParserException {
+		Vector<String> twoGramVector = new Vector<String>();
+		for (int i = 0; i < wordVector.size()-1; i++){
+			twoGramVector.add(wordVector.get(i)+ "_"+ wordVector.get(i+1));
+		}
+		return twoGramVector;
+	}
+
+	public Vector<String> extract3Grams(Vector<String> wordVector) throws ParserException {
+		Vector<String> threeGramVector = new Vector<String>();
+		for (int i = 0; i < wordVector.size()-2; i++){
+			threeGramVector.add(wordVector.get(i)+"_"+ wordVector.get(i+1)+"_"+wordVector.get(i+2));
+		}
+		return threeGramVector;
 	}
 	
 	/*
@@ -148,6 +161,10 @@ public class Crawler
 		HTree invPT = null;
 		HTree invWT = null;
 		HTree titleIndex = null;
+		HTree phraseTable = null;
+		HTree fphraseIndex = null;
+		HTree iphraseIndex = null;
+		HTree invWTP = null;
 		try {
 			String catalinaHome = System.getenv("CATALINA_HOME");
 			File f= new File(catalinaHome + "/bin/assets/project.db");             
@@ -173,6 +190,14 @@ public class Crawler
 			recman.setNamedObject("invword", invWT.getRecid());
 			titleIndex = HTree.createInstance(recman);
 			recman.setNamedObject("title", titleIndex.getRecid());
+			phraseTable = HTree.createInstance(recman);
+			recman.setNamedObject("phrase", phraseTable.getRecid());
+			fphraseIndex = HTree.createInstance(recman);
+			recman.setNamedObject("fphrase", fphraseIndex.getRecid());
+			iphraseIndex = HTree.createInstance(recman);
+			recman.setNamedObject("iphrase", iphraseIndex.getRecid());
+			invWTP = HTree.createInstance(recman);
+			recman.setNamedObject("invphrase", invWTP.getRecid());
 		} catch (Exception e) {}
 
 		PrintStream originOutputStream = System.out;
@@ -199,15 +224,12 @@ public class Crawler
 			try {
 				URL url = new URL(currentLink);
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				// int responseCode = connection.getResponseCode();
-				// System.out.println(responseCode);
-				// if (responseCode == 200 || currentLink == "http://www.cse.ust.hk"){
 				Crawler crawler = new Crawler(currentLink);
 				if (pageTable.get(currentLink)==null){
 					pageTable.put(currentLink, String.valueOf(pCount));
 					invPT.put(String.valueOf(pCount), currentLink);
 					pCount++;
-					System.out.println(pCount);
+					// System.out.println(pCount);
 				}
 				String[] value = new String[4];
 				PrintStream originalSystemOut = System.out;
@@ -255,25 +277,10 @@ public class Crawler
 				String resultTitle = "";
 				HashMap<String, Integer> titleFreqs = countFrequency(titleVector);
 				for (Map.Entry<String, Integer> entry : titleFreqs.entrySet()){
-					System.out.println(entry.getKey() + " " + entry.getValue());
+					// System.out.println(entry.getKey() + " " + entry.getValue());
 					resultTitle += entry.getKey() + " " + entry.getValue() + " ";
 				}
 				titleIndex.put(currentLink, resultTitle);
-				// HashMap<String, Integer> titleFreqs = new HashMap<>();
-				// for (String word: titleWords){
-				// 	if (titleFreqs.get(word)==null){
-				// 		titleIndex.put(word, 1);
-				// 	}
-				// 	else{
-				// 		titleIndex.put(word, titleIndex.get(word)+1);
-				// 	}
-				// }
-				// for (String word: titleWords){
-				// 	if (titleIndex.get(word)==null){
-				// 		titleIndex.put(word, 1);
-				// 	}
-
-				// }
 				value[0] = title;
 				value[1] = currentLink;
 				value[2] = lastModifiedDateString;
@@ -285,6 +292,48 @@ public class Crawler
 				HashMap<String, Integer> frequencyMap = countFrequency(wordList);
 				List<Map.Entry<String, Integer>> list = new ArrayList<>(frequencyMap.entrySet());
 				list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+				Vector<String> twoGram = crawler.extract2Grams(wordList); 
+				// for (int i = 0; i < twoGram.size(); i++) {
+				// 	System.out.println(twoGram.get(i));
+				// }
+				HashMap<String, Integer> twoGramFreq = countFrequency(twoGram);
+
+				for (Map.Entry<String, Integer> entry : twoGramFreq.entrySet()) {
+					// System.out.println(entry.getKey() + " " + entry.getValue());
+				}
+
+				List<Map.Entry<String, Integer>> twoGramList = new ArrayList<>(twoGramFreq.entrySet());
+				twoGramList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+				
+				
+
+				Vector<String> threeGram = crawler.extract3Grams(wordList); 
+				for (int i = 0; i < threeGram.size(); i++) {
+					// System.out.println(threeGram.get(i));
+				}
+				int phraseCount = 0;
+				String phraseKeyword = "";
+				for (Map.Entry<String, Integer> entry : twoGramList) {
+					// System.out.println(entry.getKey() + " " + entry.getValue());
+					if (phraseTable.get(entry.getKey())==null){
+						phraseTable.put(entry.getKey(), String.valueOf(phraseCount));
+						invWTP.put(String.valueOf(phraseCount), entry.getKey());
+						phraseCount++;
+					}
+					if (iphraseIndex.get(String.valueOf(phraseTable.get(entry.getKey())))!=null){
+						iphraseIndex.put(String.valueOf(phraseTable.get(entry.getKey())), iphraseIndex.get(String.valueOf(phraseTable.get(entry.getKey()))) + "p" + pageTable.get(currentLink) + " " + String.valueOf(entry.getValue()) + " ");
+					}
+					else{
+						iphraseIndex.put(phraseTable.get(entry.getKey()), "p" + pageTable.get(currentLink) + " " + String.valueOf(entry.getValue()) + " ");
+					}
+					// System.out.println(entry.getKey() + " " + entry.getValue() + " ");
+					phraseKeyword = phraseKeyword + entry.getKey() + " " + entry.getValue() + " ";
+				}
+				if (fphraseIndex.get(pageTable.get(currentLink))==null){
+					fphraseIndex.put(pageTable.get(currentLink), phraseKeyword);
+				}
+
 				ArrayList<String> wlist = new ArrayList<>();
 				for (Map.Entry<String, Integer> entry : list) {
 					if (entry.getKey()!=""){
@@ -316,7 +365,7 @@ public class Crawler
 							pageTable.put(links.get(i), String.valueOf(pCount));
 							invPT.put(String.valueOf(pCount), links.get(i));
 							pCount++;
-							System.out.println(pCount);
+							// System.out.println(pCount);
 						}
 							// }
 						if (!pageTable.get(links.get(i)).equals(String.valueOf(0))){

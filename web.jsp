@@ -19,11 +19,11 @@ if(request.getParameter("query")!=null)
     String[] tokens = request.getParameter("query").split(" ");
     String q = request.getParameter("query");
     StopStem stopStem = new StopStem("C:/apache-tomcat-8.5.88/webapps/comp4321/WEB-INF/classes/stopwords.txt");
-    out.println("Your query: " + q);
+    out.println("Your query: " + q.trim());
     out.println("<hr>");
     String query = request.getParameter("query");
     Search search = new Search();
-    ArrayList<String> pages = search.retrieval_fun(q);
+    ArrayList<String> pages = search.retrieval_fun(q.trim());
     RecordManager recman = null;
     HTree pageTable = null;
     HTree wordTable = null;
