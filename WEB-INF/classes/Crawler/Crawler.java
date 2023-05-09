@@ -169,10 +169,10 @@ public class Crawler
 		HTree invWTP = null;
 		try {
 			String catalinaHome = System.getenv("CATALINA_HOME");
-			File f= new File(catalinaHome + "/bin/assets/project.db");             
-			f.delete(); 
-			f = new File(catalinaHome + "/bin/assets/project.lg");
-			f.delete();
+			// File f= new File(catalinaHome + "/bin/assets/project.db");             
+			// f.delete(); 
+			// f = new File(catalinaHome + "/bin/assets/project.lg");
+			// f.delete();
 			recman = RecordManagerFactory.createRecordManager(catalinaHome + "/bin/assets/project");
 			pageTable = HTree.createInstance(recman);
 			recman.setNamedObject("page", pageTable.getRecid());
@@ -282,6 +282,7 @@ public class Crawler
 					resultTitle += entry.getKey() + " " + entry.getValue() + " ";
 				}
 				titleIndex.put(currentLink, resultTitle);
+				System.out.println(currentLink);
 				value[0] = title;
 				value[1] = currentLink;
 				value[2] = lastModifiedDateString;

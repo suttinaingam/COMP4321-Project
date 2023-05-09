@@ -99,21 +99,18 @@ public class Search {
 		for (int i = 0; i < phrases.length; i++){
             String[] p = phrases[i].split(" ");
             String combine = "";
-            System.out.println(p.length);
-            System.out.println(p);
+            // System.out.println(p.length);
+            // System.out.println(p[0]+p[1]);
             for (int j = 0; j < p.length; j++){
                 p[j] = p[j].replace("\n", "").replace("\r", "");
                 p[j] = p[j].replaceAll("[())]", "");
                 p[j] = p[j].replaceAll("[^a-zA-Z]+", "");
                 p[j] = p[j].toLowerCase();
                 if (p[j]!="" && !stopStem.isStopWord(p[j])){
-                    System.out.println(combine);
-                    combine = combine + stopStem.stem(phrases[j]);
-                }
-                if (j!=p.length-1){
-                    System.out.println(combine);
-                    combine += "_";
-                    System.out.println(combine);
+                    combine = combine + stopStem.stem(p[j]);
+                    if (j<p.length-1){
+                        combine += "_";
+                    }
                 }
             }
             phrase.add(combine);

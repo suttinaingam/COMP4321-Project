@@ -1,6 +1,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.lang.*" %>
 <%@ page import="Search.Search" %>
+<%@ page import="Crawler.Crawler" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.*" %>
 <%@ page import="jdbm.RecordManager" %>
@@ -14,6 +15,7 @@
 <%
 if(request.getParameter("query")!=null)
 {
+    out.println("<hr>");
     out.println("Search Results:");
     out.println("<hr>");
     String[] tokens = request.getParameter("query").split(" ");
