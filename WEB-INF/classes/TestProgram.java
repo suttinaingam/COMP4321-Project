@@ -16,13 +16,14 @@ public class TestProgram {
 		String startLink = "https://www.cse.ust.hk/~kwtleung/COMP4321/testpage.htm";
 		int numPages = 300;
 		try {
-			// Crawler.crawlIndex(startLink, numPages);
+			// Crawler crawler = new Crawler(startLink);
+			// crawler.crawlIndex(startLink, numPages);
 			// Crawler.retrieve();
 		} catch (Exception e) {}
 		Search search = new Search();
-		Scanner scanner = new Scanner(System.in);
-		System.out.print("Enter your query: ");
-        String query = scanner.nextLine();
+		// Scanner scanner = new Scanner(System.in);
+		// System.out.print("Enter your query: ");
+        // String query = scanner.nextLine();
 		RecordManager recman = null;
 		HTree pageTable = null;
 		HTree wordTable = null;
@@ -43,8 +44,8 @@ public class TestProgram {
 			invertedIndex = HTree.load(recman, recman.getNamedObject("invertedindex"));	
             invPT = HTree.load(recman, recman.getNamedObject("invpage"));
             invWT = HTree.load(recman, recman.getNamedObject("invword"));	
-			ArrayList<String> pages = search.retrieval_fun(query);
-			System.out.println(pages);
+			ArrayList<String> pages = search.retrieval_fun("\"test page\"");
+			// System.out.println(pages);
 			String index;
 			double score;
 			String[] info;

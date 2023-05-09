@@ -53,12 +53,15 @@ import java.io.File;
 public class Crawler
 {
 	private String url;
-
+	public StopStem stopStem;
 	/*
 	 * This is a class constructor.
 	 * @param url in String format
 	 */
-	Crawler(String _url){url = _url;}
+	public Crawler(String _url){
+		url = _url;
+		stopStem = new StopStem("stopwords.txt");
+	}
 
 	/*
 	 * This method extract words from a webpage.
@@ -72,7 +75,6 @@ public class Crawler
 		sb.setURL(url);
 		String allString = sb.getStrings();
 		String[] words = allString.split("[ \\n]");
-		StopStem stopStem = new StopStem("stopwords.txt");
 		Vector<String> wordVector = new Vector<String>();
 		for (int i = 0; i < words.length; i++){
 			words[i] = words[i].replace("\n", "").replace("\r", "");
@@ -150,7 +152,7 @@ public class Crawler
 	 * @return none
 	 */
 
-	public static void crawlIndex(String startLink, int numPages) throws Exception {
+	public void crawlIndex(String startLink, int numPages) throws Exception {
 		RecordManager recman = null;
 		HTree pageTable = null;
 		HTree wordTable = null;
@@ -263,7 +265,6 @@ public class Crawler
 					pageSize = htmlCode.length();
 				}
 				String[] titleWords = title.split(" ");
-				StopStem stopStem = new StopStem("stopwords.txt");
 				Vector<String> titleVector = new Vector<String>();
 				for (int i = 0; i < titleWords.length; i++){
 					titleWords[i] = titleWords[i].replace("\n", "").replace("\r", "");

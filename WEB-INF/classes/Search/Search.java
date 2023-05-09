@@ -15,18 +15,66 @@ public class Search {
     public ArrayList<String> retrieval_fun(String query){
         HashMap<Integer, Double> results = new HashMap<Integer, Double>();
         ArrayList<String> result = new ArrayList<>();
-        ArrayList<String> tokens = new ArrayList<String>();
         String catalinaHome = System.getenv("CATALINA_HOME");
         StopStem stopStem = new StopStem(catalinaHome + "/webapps/comp4321/WEB-INF/classes/stopwords.txt");
-        String[] phrases = query.trim().split("\"");
-        ArrayList<String> p = new ArrayList<>();
-        for (int i = 0; i < phrases.length-1; i++){
-            p.add(phrases[i]);
+        query = query.trim();
+        ArrayList<String> wordQuery = new ArrayList<>();
+        ArrayList<String> phraseQuery = new ArrayList<>();
+        int firstIndex = 0;
+        int firstSign = 1000;
+        int endSign = 1000;
+        for (int i = 0; i < query.length(); i++){
+            if (query.charAt(i)==' ' || i==query.length()-1){
+                if (firstIndex < i+1 && endSign!=0){
+                    System.out.println(firstIndex);
+                    System.out.println(i);
+                    if (i==query.length()-1){
+                        if (query.substring(firstIndex, i+1)!=""){
+                            wordQuery.add(query.substring(firstIndex, i+1));
+                        }
+                    }
+                    else{
+                        if (query.substring(firstIndex, i)!=""){
+                            wordQuery.add(query.substring(firstIndex, i));
+                        }
+                    }
+                    firstIndex = i+1;
+                }
+            }
+            if (query.charAt(i)=='\"'){
+                if (firstSign != 1000){
+                    endSign = i;
+                    phraseQuery.add(query.substring(firstSign+1, endSign));
+                    firstSign = 1000;
+                    endSign = 1000;
+                    firstIndex = i+2;
+                }
+                else{
+                    firstSign = i;
+                    endSign = 0;
+                }
+            }
         }
-        if (query.charAt(query.length()-1) =='\"'){
 
-        }
-        String[] words = query.split("[ \\n]");
+        // System.out.println(wordQuery);
+        // System.out.println(phraseQuery);
+        // ArrayList<String> p = new ArrayList<>();
+        // String[] words = query.split("[ \\n]");
+		// for (int i = 0; i < words.length; i++){
+		// 	words[i] = words[i].replace("\n", "").replace("\r", "");
+		// 	words[i] = words[i].replaceAll("[())]", "");
+		// 	words[i] = words[i].replaceAll("[^a-zA-Z]+", "");
+		// 	words[i] = words[i].toLowerCase();
+		// 	if (words[i]!="" && !stopStem.isStopWord(words[i])){
+		// 		tokens.add(stopStem.stem(words[i]));
+		// 	}
+		// }
+        // for (String token: tokens){
+        //     System.out.println(token);
+        // }
+        String[] words = new String[wordQuery.size()];
+        ArrayList<String> tokens = new ArrayList<String>();
+        words = wordQuery.toArray(words);
 		for (int i = 0; i < words.length; i++){
 			words[i] = words[i].replace("\n", "").replace("\r", "");
 			words[i] = words[i].replaceAll("[())]", "");
@@ -36,10 +84,7 @@ public class Search {
 				tokens.add(stopStem.stem(words[i]));
 			}
 		}
-        // for (String token: tokens){
-        //     System.out.println(token);
-        // }
-
+        // System.out.println(tokens);
         // Create a HashMap to store the token frequencies
         HashMap<String, Integer> tokenFreqs = new HashMap<String, Integer>();
 
@@ -48,7 +93,40 @@ public class Search {
             int currentFreq = tokenFreqs.getOrDefault(tokens.get(i), 0);
             tokenFreqs.put(tokens.get(i), currentFreq + 1);
         }
+        ArrayList<String> phrase = new ArrayList<String>();
+        String[] phrases = new String[phraseQuery.size()];
+        phrases = phraseQuery.toArray(phrases);
+		for (int i = 0; i < phrases.length; i++){
+            String[] p = phrases[i].split(" ");
+            String combine = "";
+            System.out.println(p.length);
+            System.out.println(p);
+            for (int j = 0; j < p.length; j++){
+                p[j] = p[j].replace("\n", "").replace("\r", "");
+                p[j] = p[j].replaceAll("[())]", "");
+                p[j] = p[j].replaceAll("[^a-zA-Z]+", "");
+                p[j] = p[j].toLowerCase();
+                if (p[j]!="" && !stopStem.isStopWord(p[j])){
+                    System.out.println(combine);
+                    combine = combine + stopStem.stem(phrases[j]);
+                }
+                if (j!=p.length-1){
+                    System.out.println(combine);
+                    combine += "_";
+                    System.out.println(combine);
+                }
+            }
+            phrase.add(combine);
+		}
+        System.out.println(phrase);
+        // Create a HashMap to store the token frequencies
+        HashMap<String, Integer> phraseFreqs = new HashMap<String, Integer>();
 
+        // Iterate over the tokens and update the phrase frequencies
+        for (int i = 0; i < phrase.size(); i++) {
+            int currentFreq = phraseFreqs.getOrDefault(phrase.get(i), 0);
+            phraseFreqs.put(phrase.get(i), currentFreq + 1);
+        }
         // Print the token frequencies
         // for (Map.Entry<String, Integer> entry : tokenFreqs.entrySet()) {
         //     System.out.println(entry.getKey() + " = " + entry.getValue());
@@ -376,7 +454,7 @@ public class Search {
                     }
                 }
                 // System.out.println("h");
-                for (Map.Entry<String, Integer> entry : tokenFreqs.entrySet()) {
+                for (Map.Entry<String, Integer> entry : phraseFreqs.entrySet()) {
                     // System.out.println(entry.getKey());
                     if (tfidfP[i].get(entry.getKey())!=null){
                         double value = entry.getValue() * tfidfP[i].get(entry.getKey());
@@ -395,7 +473,7 @@ public class Search {
                 }
                 // if (i == 75){System.out.println(innerProduct);}
                 int count = 0;
-                for (String token: tokens){
+                for (String token: phrase){
                     String a = (String) invPT.get(Integer.toString(i));
                     // System.out.println(a);
                     String b = (String) titleIndex.get(a);
@@ -415,7 +493,7 @@ public class Search {
                     }
                     // if (i==70){System.out.println(tokens.size());System.out.println(count);}
                     // System.out.println(temp.length/2);
-                    if (count == tokens.size()){
+                    if (count == phrase.size()){
                         innerProduct += 1;
                     }
                 }
