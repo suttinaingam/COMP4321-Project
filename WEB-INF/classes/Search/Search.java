@@ -115,7 +115,7 @@ public class Search {
             }
             phrase.add(combine);
 		}
-        System.out.println(phrase);
+        // System.out.println(phrase);
         // Create a HashMap to store the token frequencies
         HashMap<String, Integer> phraseFreqs = new HashMap<String, Integer>();
 
@@ -255,7 +255,7 @@ public class Search {
                 // System.out.println(invertedIndex.get(Integer.toString(i)));
                 String content = (String) invertedIndex.get(Integer.toString(i));
                 String[] arr = content.trim().split(" ");
-                // if (i ==0 || i==1){System.out.println(arr.length/2);}
+                if (i ==0){System.out.println(content);}
                 df.put(Integer.toString(i), arr.length/2);
                 // if (i < 100){
                 //     System.out.println("Page " + i + ": " + arr.length/2 + " occurrences");
@@ -397,6 +397,7 @@ public class Search {
                 String content = (String) invertedPhrase.get(Integer.toString(i));
                 String[] arr = content.trim().split(" ");
                 // if (i ==0 || i==1){System.out.println(arr.length/2);}
+                if (i==0){System.out.println(content);}
                 dfP.put(Integer.toString(i), arr.length/2);
                 // if (i < 100){
                 //     System.out.println("Page " + i + ": " + arr.length/2 + " occurrences");
@@ -417,7 +418,7 @@ public class Search {
                     // System.out.println(phraseTable.get(arr.get(i)));
                     // System.out.println(dfP.get(phraseTable.get(arr.get(i))));
                     double d = Math.log(numDoc/dfP.get(phraseTable.get(arr.get(i))))/(Math.log(2));
-                    // System.out.println("end");
+                    // System.out.println(d);
                     // System.out.println(df.get(wordTable.get(arr.get(i))));
                     // System.out.println(maxtf.get(Integer.toString(j)));
                     if (j==75){
@@ -426,6 +427,9 @@ public class Search {
                     }
                     value = t * d;
                     value = value/maxtfP.get(Integer.toString(j));
+                    // System.out.println(t);
+                    // System.out.println(d);
+                    // System.out.println(maxtfP.get(Integer.toString(j)));
                     tfidfP[j].put(arr.get(i), Double.valueOf(value));
                 }
             }
@@ -497,7 +501,6 @@ public class Search {
                 if (innerProduct != 0.0){
                     results.put(Integer.valueOf(i), innerProduct);
                 }
-                // System.out.println("h3");
             }
 
             List<Map.Entry<Integer, Double>> sortedResults = new ArrayList<Map.Entry<Integer, Double>>(results.entrySet());

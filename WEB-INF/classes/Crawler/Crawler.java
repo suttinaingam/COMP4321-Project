@@ -60,7 +60,7 @@ public class Crawler
 	 */
 	public Crawler(String _url){
 		url = _url;
-		stopStem = new StopStem("stopwords.txt");
+		stopStem = new StopStem("C:/apache-tomcat-8.5.88/webapps/comp4321/WEB-INF/classes/stopwords.txt");
 	}
 
 	/*
@@ -219,6 +219,7 @@ public class Crawler
         visited.add(startLink);
 		int pageCount = 0;
 		int wordCount = 0;
+		int phraseCount = 0;
 		int pCount = 0;
 		long startTime = System.currentTimeMillis();
 		while (!queue.isEmpty() && pageCount < numPages) {
@@ -281,7 +282,9 @@ public class Crawler
 					// System.out.println(entry.getKey() + " " + entry.getValue());
 					resultTitle += entry.getKey() + " " + entry.getValue() + " ";
 				}
-				titleIndex.put(currentLink, resultTitle);
+				if (titleIndex.get(currentLink)==null){
+					titleIndex.put(currentLink, resultTitle);
+				}
 				System.out.println(currentLink);
 				value[0] = title;
 				value[1] = currentLink;
@@ -307,6 +310,7 @@ public class Crawler
 
 				List<Map.Entry<String, Integer>> twoGramList = new ArrayList<>(twoGramFreq.entrySet());
 				twoGramList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
 				
 				
 
@@ -314,8 +318,8 @@ public class Crawler
 				for (int i = 0; i < threeGram.size(); i++) {
 					// System.out.println(threeGram.get(i));
 				}
-				int phraseCount = 0;
 				String phraseKeyword = "";
+				
 				for (Map.Entry<String, Integer> entry : twoGramList) {
 					// System.out.println(entry.getKey() + " " + entry.getValue());
 					if (phraseTable.get(entry.getKey())==null){
@@ -324,6 +328,8 @@ public class Crawler
 						phraseCount++;
 					}
 					if (iphraseIndex.get(String.valueOf(phraseTable.get(entry.getKey())))!=null){
+						// System.out.println(String.valueOf(phraseTable.get(entry.getKey())));
+						// System.out.println("p" + pageTable.get(currentLink) + " " + String.valueOf(entry.getValue()) + " ");
 						iphraseIndex.put(String.valueOf(phraseTable.get(entry.getKey())), iphraseIndex.get(String.valueOf(phraseTable.get(entry.getKey()))) + "p" + pageTable.get(currentLink) + " " + String.valueOf(entry.getValue()) + " ");
 					}
 					else{
@@ -395,6 +401,9 @@ public class Crawler
 		long endTime = System.currentTimeMillis();
 		long elapsedTime = endTime - startTime;
 		System.out.println("Elapsed time: " + elapsedTime + " ms");
+		System.out.println(iphraseIndex.get("0"));
+		System.out.println(invWTP.get("0"));
+		System.out.println(phraseTable.get("test_page"));
 		// Close the output stream
 		try {
 			fos.close();
@@ -403,115 +412,4 @@ public class Crawler
 			recman.close();
 		} catch (Exception e) {}
 	}
-
-	public static void retrieve(){
-		// PrintStream originOutputStream = System.out;
-		// File file = new File("spider_result.txt");
-		// FileOutputStream fos = null;
-		// try {
-		// 	fos = new FileOutputStream(file);
-		// } catch (Exception e) {
-		// }
-		// PrintStream ps = new PrintStream(fos);
-		// System.setOut(ps);
-		RecordManager recman = null;
-		HTree pageTable = null;
-		HTree wordTable = null;
-		HTree pageProp = null;
-		HTree forwardIndex = null;
-		HTree childParent = null;
-		HTree invertedIndex = null;
-		try {
-			recman = RecordManagerFactory.createRecordManager("project");
-			pageTable = HTree.load(recman, recman.getNamedObject("page"));
-			wordTable = HTree.load(recman, recman.getNamedObject("word"));
-			pageProp = HTree.load(recman, recman.getNamedObject("pageprop"));
-			forwardIndex = HTree.load(recman, recman.getNamedObject("forwardindex"));
-			childParent = HTree.load(recman, recman.getNamedObject("childparent"));
-			invertedIndex = HTree.load(recman, recman.getNamedObject("invertedindex"));
-			FastIterator iter = pageProp.keys();
-			String key;
-			String key2;
-			FastIterator invertedIter = invertedIndex.keys();	
-			FastIterator wordIter = wordTable.keys();
-			// FastIterator iter3 = childParent.keys();
-			int i = 0;
-			while(invertedIter.next()!=null) {
-				i++;
-				// invertedIter.next();
-			}
-			// System.out.println(i);
-			i = 0;
-			while(wordIter.next()!=null) {
-				i++;
-				// invertedIter.next();
-			}
-			System.out.println(i);
-			invertedIter = invertedIndex.keys();
-			wordIter = wordTable.keys();
-			while ((key = (String)invertedIter.next())!=null){
-				// System.out.println(key);
-				while ((key2 = (String)wordIter.next())!=null){
-					// System.out.println("Inverted " + key);
-					// System.out.println("WordTable " + wordTable.get(key2));
-					// System.out.println(key.equals((String)wordTable.get(key2)));
-					if (key.equals((String)wordTable.get(key2))){
-						// System.out.print(key2 + ": ");
-					}
-				}
-				// wordIter = wordTable.keys();
-				// System.out.println(invertedIndex.get(key));
-				// System.out.print(wordTable.get(key));
-				// System.out.println(invertedIndex.get(key));
-				// String[] array2 = value2.split(" ");
-				// for (String a : array2){
-				// 	// System.out.println(a);
-				// }
-			}
-			iter = pageProp.keys();
-			while( (key = (String)iter.next())!=null)
-			{
-				String[] in = (String[])pageProp.get(key);
-				String title = in[0];
-				String URL = in[1];
-				String date = in[2];
-				String size = in[3];
-				System.out.println(title);
-				System.out.println(URL);
-				System.out.println(date + ", " + size);
-				System.out.println("--------------------");
-				
-			}
-			wordIter = wordTable.keys();
-			while ((key = (String)wordIter.next())!=null){
-				// System.out.println(key);
-				// System.out.println(wordTable.get(key));
-			}
-			// fos.close();
-			// System.setOut(originOutputStream);
-		} catch (Exception e) {}
-	}
-
-	public static String hello_world(){
-        return "hello world!";
-    }
-	
-	// public static void main (String[] args) 
-	// {
-	// 	try  
-	// 	{         
-	// 		File f= new File("project.db");             
-	// 		f.delete(); 
-	// 		f = new File("project.lg");
-	// 		f.delete();
-	// 	}  catch(Exception e)  {}  
-	// 	String startLink = "http://www.cse.ust.hk";
-	// 	// String startLink = "https://www.cse.ust.hk/~kwtleung/COMP4321/testpage.htm";
-	// 	int numPages = 10;
-    //     // bfs(startLink, numPages);
-	// 	try {
-	// 		crawlIndex(startLink, numPages);
-	// 		retrieve();
-	// 	} catch (Exception e) {}
-	// }
 }
